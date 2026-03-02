@@ -1,10 +1,10 @@
-# Deploy Guide — Demo Mode (100% Miễn Phí)
+# Deploy Guide — 100% Miễn Phí
 
-Hướng dẫn deploy **Demo Mode** lên Render + Vercel hoàn toàn miễn phí.
+Hướng dẫn deploy lên Render + Vercel hoàn toàn miễn phí, dùng **OSRM Public Server** để vẽ đường bộ thật.
 
-> **Demo Mode** dùng Mock OSRM (Haversine × 1.3) thay vì OSRM thật.  
-> Phù hợp cho: portfolio, demo, CI/CD, showcase.  
-> Để dùng OSRM thật, xem `docs/PROJECT_DOCUMENTATION.md` Section 6.
+> **OSRM Public Server** (`router.project-osrm.org`) cho kết quả routing theo đường bộ thật.  
+> Phù hợp cho: portfolio, demo, showcase.  
+> Fallback: set `USE_MOCK_OSRM=true` để dùng Haversine offline khi không cần routing thật.
 
 ---
 
@@ -15,7 +15,7 @@ Vercel (Frontend React)           — miễn phí mãi mãi
     │ gọi API trực tiếp
     ▼
 Render Web Service (Backend)      — miễn phí (sleep sau 15 phút không dùng)
-    │ Mock OSRM chạy inline (USE_MOCK_OSRM=true, không cần service riêng)
+    │ gọi OSRM Public Server (router.project-osrm.org)
     ▼
 Upstash Redis (optional)          — miễn phí (10,000 req/ngày)
 ```
@@ -44,7 +44,7 @@ Truy cập https://render.com → Đăng ký bằng GitHub.
 
 1. Nhấn **New** → **Blueprint** (sử dụng `render.yaml`)
 2. Chọn repo → Render tự detect `render.yaml` và tạo **1 service**:
-   - `routing-backend` — FastAPI backend (Mock OSRM chạy inline)
+   - `routing-backend` — FastAPI backend (dùng OSRM Public Server)
 
 ### 2.3 Deploy thủ công (nếu Blueprint không hoạt động)
 
@@ -59,7 +59,7 @@ Truy cập https://render.com → Đăng ký bằng GitHub.
 
    | Key | Value |
    |-----|-------|
-   | `USE_MOCK_OSRM` | `true` |
+   | `OSRM_BASE_URL` | `https://router.project-osrm.org` |
    | `REDIS_URL` | `rediss://default:...@....upstash.io:6379` |
    | `CACHE_TTL` | `300` |
    | `REQUEST_TIMEOUT` | `15.0` |
@@ -105,7 +105,7 @@ Truy cập https://vercel.com → Đăng ký bằng GitHub.
 
 Truy cập URL Vercel cấp (dạng `https://self-hosted-routing-system.vercel.app`):
 - Giao diện map hiện ra ✓
-- Nhập địa điểm, tính tuyến đường → kết quả Haversine × 1.3 ✓
+- Nhập địa điểm, tính tuyến đường → geometry đường bộ thật hiển thị trên map ✓
 - Nút VI/EN hoạt động ✓
 
 ---
@@ -129,7 +129,7 @@ Truy cập URL Vercel cấp (dạng `https://self-hosted-routing-system.vercel.a
 | Sleep sau 15 phút | Request đầu sau sleep mất ~30s |
 | 750 giờ/tháng | Đủ cho 1 service chạy suốt tháng |
 | Không có persistent disk | Không lưu file |
-| RAM 512 MB | Đủ cho backend (mock OSRM chạy inline) |
+| RAM 512 MB | Đủ cho backend (gọi OSRM Public Server qua HTTP) |
 
 ### Upstash Free Tier Limitations
 
@@ -171,9 +171,9 @@ https://<new-service-name>.onrender.com
 
 ---
 
-## Deploy Production (OSRM thật) — Tùy chọn nâng cấp
+## Deploy Production (OSRM self-hosted) — Tùy chọn nâng cấp
 
-Khi cần routing chính xác theo đường bộ, nâng cấp lên một trong hai:
+Khi cần routing không phụ thuộc OSRM Public Server (SLA cao hơn, không rate limit), tự host OSRM:
 
 | Option | Chi phí | RAM | Phù hợp |
 |--------|---------|-----|---------|

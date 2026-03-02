@@ -7,7 +7,9 @@ services:
     plan: free
     envVars:
       - key: USE_MOCK_OSRM
-        value: true
+        value: false
+      - key: OSRM_BASE_URL
+        value: https://router.project-osrm.org
       - key: REDIS_URL
         sync: false
       - key: CACHE_TTL

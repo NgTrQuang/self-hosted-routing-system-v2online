@@ -6,6 +6,13 @@ const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search'
 
 // Vietnam bounding box: SW(8.18, 102.14) → NE(23.39, 109.46)
 const VN_VIEWBOX = '102.14,8.18,109.46,23.39'
+const VN_BBOX = { minLat: 8.18, maxLat: 23.39, minLng: 102.14, maxLng: 109.46 }
+
+function isInVietnam(item) {
+  const lat = parseFloat(item.lat)
+  const lng = parseFloat(item.lon)
+  return lat >= VN_BBOX.minLat && lat <= VN_BBOX.maxLat && lng >= VN_BBOX.minLng && lng <= VN_BBOX.maxLng
+}
 
 const TYPE_LABEL = {
   bridge: 'Cầu', road: 'Đường', street: 'Đường', residential: 'Khu dân cư',
@@ -22,14 +29,14 @@ function getTypeLabel(item) {
   return TYPE_LABEL[t] || (t ? t.charAt(0).toUpperCase() + t.slice(1) : null)
 }
 
-async function nominatimSearch(q) {
+async function nominatimSearch(q, bounded = 1) {
   const params = new URLSearchParams({
     q,
     format: 'json',
     limit: 10,
     addressdetails: 1,
     viewbox: VN_VIEWBOX,
-    bounded: 0,
+    bounded,
     'accept-language': 'vi,en',
   })
   const res = await fetch(`${NOMINATIM_URL}?${params}`, {
@@ -96,11 +103,19 @@ export default function SearchBox({ label, color, onSelect }) {
       try {
         const alreadyHasVN = /vi[eê]t\s*nam/i.test(trimmed)
         const queries = alreadyHasVN
-          ? [nominatimSearch(trimmed)]
-          : [nominatimSearch(trimmed), nominatimSearch(trimmed + ', Việt Nam')]
+          ? [nominatimSearch(trimmed, 1)]
+          : [nominatimSearch(trimmed, 1), nominatimSearch(trimmed + ', Việt Nam', 1)]
 
-        const results = await Promise.all(queries)
-        const merged = deduplicateByPlaceId(results).slice(0, 10)
+        let results = await Promise.all(queries)
+        let merged = deduplicateByPlaceId(results).filter(isInVietnam).slice(0, 10)
+
+        if (merged.length === 0 && !alreadyHasVN) {
+          const fallback = await Promise.all([
+            nominatimSearch(trimmed, 0),
+            nominatimSearch(trimmed + ', Việt Nam', 0),
+          ])
+          merged = deduplicateByPlaceId(fallback).filter(isInVietnam).slice(0, 10)
+        }
         setResults(merged)
         setOpen(merged.length > 0)
       } catch {
