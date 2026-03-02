@@ -1,0 +1,26 @@
+# OSM / OSRM data files (large binary files)
+osrm-data/
+*.osm.pbf
+*.osrm
+*.osrm.*
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# Environment
+.env
+
+# Docker
+.dockerignore
+
+# OS
+.DS_Store
+Thumbs.db

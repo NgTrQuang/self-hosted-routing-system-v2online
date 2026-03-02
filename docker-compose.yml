@@ -1,0 +1,57 @@
+# Production compose — uses real OSRM with preprocessed vietnam-latest.osrm
+# Prerequisite: run scripts/preprocess.sh once before first use
+# OSRM file name must match what preprocess.sh produced in osrm-data/
+
+services:
+  osrm:
+    image: osrm/osrm-backend
+    volumes:
+      - ./osrm-data:/data
+    command: osrm-routed --algorithm mld /data/vietnam-latest.osrm
+    ports:
+      - "5000:5000"
+    restart: always
+    networks:
+      - routing-net
+
+  backend:
+    build: ./backend
+    ports:
+      - "8080:8080"
+    environment:
+      - OSRM_BASE_URL=http://osrm:5000
+      - REDIS_URL=redis://redis:6379
+      - CACHE_TTL=300
+      - REQUEST_TIMEOUT=10.0
+      - ALLOWED_ORIGINS=*
+    depends_on:
+      - osrm
+      - redis
+    restart: always
+    networks:
+      - routing-net
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:8080
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: always
+    networks:
+      - routing-net
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: always
+    networks:
+      - routing-net
+
+networks:
+  routing-net:
+    driver: bridge

@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: routing-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    envVars:
+      - key: USE_MOCK_OSRM
+        value: true
+      - key: REDIS_URL
+        sync: false
+      - key: CACHE_TTL
+        value: 300
+      - key: REQUEST_TIMEOUT
+        value: 15.0
