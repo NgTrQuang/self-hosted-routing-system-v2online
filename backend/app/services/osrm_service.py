@@ -1,5 +1,4 @@
 import math
-import random
 import httpx
 import polyline as polyline_codec
 from typing import Dict, Any, List
@@ -21,7 +20,7 @@ def _haversine_meters(lat1: float, lng1: float, lat2: float, lng2: float) -> flo
 
 def _mock_dist_dur(lat1: float, lng1: float, lat2: float, lng2: float):
     straight = _haversine_meters(lat1, lng1, lat2, lng2)
-    road_factor = 1.35 + random.uniform(0, 0.15)
+    road_factor = 1.4
     distance = straight * road_factor
     avg_speed_mps = 40 * 1000 / 3600
     duration = distance / avg_speed_mps
